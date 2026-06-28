@@ -1,3 +1,7 @@
+2026-06-28  19:25  Christos Zoulas <christos@zoulas.com>
+	
+	* add support for st_flags printing
+
 2026-05-08  16:08  Christos Zoulas <christos@zoulas.com>
 	
 	* add preliminary lz4 support

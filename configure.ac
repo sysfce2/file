@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([file],[5.47],[christos@astron.com])
+AC_INIT([file],[5.48],[christos@astron.com])
 AM_INIT_AUTOMAKE([subdir-objects foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -63,6 +63,12 @@ AC_MSG_CHECKING(for lrziplib support)
 AC_ARG_ENABLE([lrziplib],
 [AS_HELP_STRING([--disable-lrziplib], [disable liblrzip (lrzip) compression support @<:@default=auto@:>@])])
 AC_MSG_RESULT($enable_lrziplib)
+
+AC_MSG_CHECKING(for lz4 support)
+AC_ARG_ENABLE([lz4lib],
+[AS_HELP_STRING([--disable-lz4lib], [disable liblz4 (lz4) compression support @<:@default=auto@:>@])])
+AC_MSG_RESULT($enable_lz4kklib)
+
 
 AC_MSG_CHECKING(for libseccomp support)
 AC_ARG_ENABLE([libseccomp],
@@ -141,12 +147,16 @@ fi
 if test "$enable_lrziplib" != "no"; then
   AC_CHECK_HEADERS(Lrzip.h)
 fi
+if test "$enable_lz4lib" != "no"; then
+  AC_CHECK_HEADERS(lz4frame.h)
+fi
 AC_CHECK_TYPE([sig_t],[AC_DEFINE([HAVE_SIG_T],1,[Have sig_t type])],,[#include <signal.h>])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_CHECK_MEMBERS([struct stat.st_rdev])
+AC_CHECK_MEMBERS([struct stat.st_flags])
 
 AC_CHECK_MEMBERS([struct tm.tm_gmtoff],,,[#include <time.h>])
 AC_STRUCT_TIMEZONE
@@ -206,7 +216,7 @@ else
 fi])
 
 dnl Checks for functions
-AC_CHECK_FUNCS(strndup mkstemp mkostemp utimes utime wcwidth strtof newlocale uselocale freelocale memmem pipe2 posix_spawnp)
+AC_CHECK_FUNCS(strndup mkstemp mkostemp utimes utime wcwidth strtof newlocale uselocale freelocale memmem pipe2 posix_spawnp qsort_r)
 
 dnl Provide implementation of some required functions if necessary
 AC_REPLACE_FUNCS(getopt_long asprintf vasprintf strlcpy strlcat getline ctime_r asctime_r localtime_r gmtime_r pread strcasestr fmtcheck dprintf)
@@ -229,6 +239,9 @@ if test "$enable_lzlib" != "no"; then
 fi
 if test "$enable_lrziplib" != "no"; then
   AC_CHECK_LIB(lrzip, lrzip_new)
+fi
+if test "$enable_lz4lib" != "no"; then
+  AC_CHECK_LIB(lz4, LZ4F_createDecompressionContext)
 fi
 
 if test "$enable_libseccomp" != "no"; then
@@ -293,6 +306,15 @@ if test "$enable_lrziplib" = "yes"; then
 fi
 if  test "$ac_cv_header_Lrzip_h$ac_cv_lib_lrzip_lrzip_new" = "yesyes"; then
   AC_DEFINE([LRZIPLIBSUPPORT], 1, [Enable lrziplib compression support])
+fi
+
+if test "$enable_lz4lib" = "yes"; then
+  if test "$ac_cv_header_lz4frame_h$ac_cv_lib_lz4_LZ4F_createDecompressionContext" != "yesyes"; then
+    AC_MSG_ERROR([lz4 support requested but not found])
+  fi
+fi
+if test "$ac_cv_header_lz4frame_h$ac_cv_lib_lz4_LZ4F_createDecompressionContext" = "yesyes"; then
+  AC_DEFINE([LZ4LIBSUPPORT], 1, [Enable lz4 compression support])
 fi
 
 AC_CONFIG_FILES([Makefile src/Makefile magic/Makefile tests/Makefile doc/Makefile python/Makefile libmagic.pc])
